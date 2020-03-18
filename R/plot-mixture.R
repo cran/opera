@@ -1,7 +1,8 @@
 #' Plot an object of class mixture
 #' 
 #' provides different diagnostic plots for an aggregation procedure.
-#' @param x an object of class mixture
+#' @param x an object of class mixture. If awake is provided (i.e., some experts are unactive), 
+#' their residuals and cumulative losses are computed by using the predictions of the mixture.
 #' @param pause if set to TRUE (default) displays the plots separately, otherwise on a single page
 #' @param col the color to use to represent each experts, if set to NULL (default) use R\code{RColorBrewer::brewer.pal(...,"Spectral"}
 #' @param ... additional plotting parameters
@@ -28,7 +29,16 @@ plot.mixture <- function(x, pause = FALSE, col = NULL, ...) {
   K <- length(x$experts)
   w.order <- order(apply(x$weights,2,mean),decreasing = TRUE)
   
-  if (is.null(col)) col <- rev(RColorBrewer::brewer.pal(n = max(min(K,11),4),name = "Spectral"))[1:min(K,11)]
+  if (is.null(col)) {
+    if(!requireNamespace("RColorBrewer", quietly = TRUE)) {
+      print("The RColorBrewer package must be installed to get better colors\n")
+      col <- 2:min((K+1),7)
+    } else{
+      col <- rev(RColorBrewer::brewer.pal(n = max(min(K,11),4),name = "Spectral"))[1:min(K,11)]
+    }
+  }
+
+    
   my.colors <- col
   
   col <- numeric(K)
@@ -36,10 +46,6 @@ plot.mixture <- function(x, pause = FALSE, col = NULL, ...) {
     col[w.order] <- my.colors[1:K]
   } else {
     col[w.order] <- c(my.colors, rep(my.colors[length(my.colors)],K-length(my.colors)))
-  }
-  
-  if (is.null(names(x$experts))) {
-    names(x$experts) <- colnames(x$experts)
   }
   
   if (!pause) {
@@ -53,13 +59,13 @@ plot.mixture <- function(x, pause = FALSE, col = NULL, ...) {
   T <- x$T
   d <- x$d
   
-  if (is.null(names(x$experts))) {
-    names(x$experts) <- colnames(x$experts)
+  if (!is.null(x$names.experts)) {
+    names(x$weights) <- names(x$experts) <- x$names.experts
+  } else {
+    if (is.null(names(x$experts))) {
+      names(x$weights) <- names(x$experts) <- x$names.experts <- paste("X", 1:K,sep="")
+    }
   }
-  if (is.null(names(x$experts))) {
-    names(x$experts) <- paste("X", 1:K,sep="")
-  }
-  names(x$weights) <- names(x$experts)
   l.names <- max(nchar(names(x$experts))) / 3 + 1.7
   
   if (x$model == "Ridge") {
@@ -106,9 +112,17 @@ plot.mixture <- function(x, pause = FALSE, col = NULL, ...) {
   
   
   # Box plot
+  if (!is.null(x$awake)) {
+    pond <- apply(x$awake[d*(1:T),],1,sum)
+    normalized.weights <- x$weights * pond / (K*x$awake[d*(1:T),])
+    normalized.weights[x$awake[d*(1:T),] == pond] <- NaN
+  } else {
+    normalized.weights <- x$weights 
+  }
+  
   i.order <- w.order[1:min(K,20)]
   par(mar = c(l.names, 3, 1.6, 0.1))
-  boxplot(x$weights[,i.order], main = "Weights associated with the experts", col = col[i.order], axes = FALSE, pch='.')
+  boxplot(normalized.weights[,i.order], main = "Weights associated with the experts", col = col[i.order], axes = FALSE, pch='.')
   mtext(side = 2, text = "Weights", line = 1.8, cex = 1)
   axis(1, at = 1:(min(K,20)), labels = FALSE)
   mtext(at = 1:min(K,20), text = names(x$weights)[i.order], side = 1, las = 2, col = col[i.order], line = 0.8)
@@ -117,7 +131,7 @@ plot.mixture <- function(x, pause = FALSE, col = NULL, ...) {
   
   
   #note: always pass alpha on the 0-255 scale
-  makeTransparent<-function(someColor, alpha=100)
+  makeTransparent<-function(someColor, alpha=220)
   {
     newColor<-col2rgb(someColor)
     apply(newColor, 2, function(curcoldata){rgb(red=curcoldata[1], green=curcoldata[2],
@@ -126,7 +140,9 @@ plot.mixture <- function(x, pause = FALSE, col = NULL, ...) {
   
   # Cumulative loss
   par(mar = c(1.5, 3, 2.5, l.names/2), mgp = c(1, 0.5, 0))
-  cumul.losses <- apply(loss(x$experts, x$Y, x$loss.type), 2, cumsum)[seq(d,T*d,by=d),]
+  pred.experts <- (x$experts * x$awake + x$prediction * (1-x$awake))
+  
+  cumul.losses <- apply(loss(pred.experts, x$Y, x$loss.type), 2, cumsum)[seq(d,T*d,by=d),]
   cumul.exploss <- cumsum(loss(x$prediction, x$Y, x$loss.type))[seq(d,T*d,by=d)]
   
   matplot(cumul.losses, type = "l", lty = 1, xlab = "", ylab = "", 
@@ -140,7 +156,7 @@ plot.mixture <- function(x, pause = FALSE, col = NULL, ...) {
   
   # Cumulative residuals
   par(mar = c(1.5, 3, 2.5,l.names/2), mgp = c(1, 0.5, 0))
-  cumul.residuals <- apply(x$Y - x$experts, 2, cumsum)[seq(d,T*d,by=d),]
+  cumul.residuals <- apply(x$Y - pred.experts, 2, cumsum)[seq(d,T*d,by=d),]
   cumul.expres <- cumsum(x$Y - x$prediction)[seq(d,T*d,by=d)]
   matplot(cumul.residuals, type = "l", lty = 1, xlab = "", ylab = "", 
           main = paste("Cumulative residuals"), col = makeTransparent(col), ylim = range(c(cumul.residuals,cumul.expres)))
@@ -157,7 +173,7 @@ plot.mixture <- function(x, pause = FALSE, col = NULL, ...) {
   
   #losses
   l.names <- max(max(nchar(names(x$experts))) / 3 + 1.7,4)
-  x$loss.experts <- oracle(x$Y, x$experts, model = "expert", loss.type = x$loss.type)$loss.experts
+  x$loss.experts <- apply(loss(x = pred.experts,y = x$Y,loss.type = x$loss.type),2,mean)
   err.unif <- lossConv(rep(1/K, K), x$Y, x$experts, awake = x$awake, loss.type = x$loss.type)
   err.mixt <- x$loss
   idx.sorted <- order(c(x$loss.experts, err.unif, err.mixt))

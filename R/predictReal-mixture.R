@@ -6,8 +6,12 @@ predictReal <- function(object, newexperts = NULL, newY = NULL, awake = NULL,
   # Number of instant and number of experts
   if (!is.null(newY)) {
     T <- length(newY)
-    if (is.null(object$names.experts) && T == 1) {
-      object$names.experts <- names(newexperts)
+    if (is.null(object$names.experts)) {
+      if (T == 1) {
+        object$names.experts <- names(newexperts)
+      } else {
+        object$names.experts <- colnames(newexperts)
+      }
     }
     newexperts <- matrix(newexperts, nrow = T)
     N <- ncol(newexperts)
@@ -39,8 +43,7 @@ predictReal <- function(object, newexperts = NULL, newY = NULL, awake = NULL,
   awake[idx.na] <- 0
   newexperts[idx.na] <- 0
   
-  # test possible warnings and errors
-  if (is.null(object$training) && (object$coefficients != "Uniform") && (object$model == 
+  if (is.null(object$training) && (object$coefficients[1] != "Uniform") && (object$model == 
                                                                          "MLpol")) {
     stop(paste(object$model, "cannot handle non-uniform prior weight vector"))
   }

@@ -1,23 +1,26 @@
 Package: opera
 Type: Package
 Title: Online Prediction by Expert Aggregation
-Version: 1.0
-Date: 2016-08-11
+Version: 1.1
+Date: 2020-03-11
 Author: Pierre Gaillard [cre, aut],
   Yannig Goude [aut]
 Maintainer: Pierre Gaillard <pierre@gaillard.me>
 Copyright: EDF R&D 2012-2015
-Description: Misc methods to form online predictions, for regression-oriented time-series, by combining a finite set of forecasts provided by the user.
+Description: Misc methods to form online predictions, for regression-oriented 
+    time-series, by combining a finite set of forecasts provided by the user. See 
+             Cesa-Bianchi and Lugosi (2006) <doi:10.1017/CBO9780511546921> for an overview. 
 License: LGPL
 URL: http://pierre.gaillard.me/opera.html
 BugReports: https://github.com/dralliag/opera/issues
 Depends: R (>= 3.1.0)
-Imports: quadprog, quantreg, RColorBrewer
-Suggests: testthat, splines, caret, mgcv, survival, knitr, gbm
+Imports:
+Suggests: quantreg, quadprog, RColorBrewer, testthat, splines, caret,
+        mgcv, survival, knitr, gbm, htmltools
 LazyData: true
 VignetteBuilder: knitr
-RoxygenNote: 5.0.1
+RoxygenNote: 7.1.0
 NeedsCompilation: no
-Packaged: 2016-08-17 09:16:55 UTC; Pierre
+Packaged: 2020-03-18 09:33:26 UTC; Pierre
 Repository: CRAN
-Date/Publication: 2016-08-17 12:26:24
+Date/Publication: 2020-03-18 22:40:03 UTC

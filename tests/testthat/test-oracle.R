@@ -7,6 +7,7 @@ n <- 50
 X <- cbind(rep(0, n), rep(1, n))
 Y <- rep(0.4, n)
 X[n, ] <- c(1, 1)
+colnames(X) <- c("Exp1","Exp2")
 Y[n] <- 1
 awake <- cbind(rep(c(0, 1), n/2), 1)
 
@@ -19,12 +20,12 @@ test_that("loss functions return correct values", {
 # Test of oracle functions
 test_that("Best expert oracle is ok", {
   m <- oracle(Y = Y, experts = X, model = "expert")
-  expect_that(m$coefficients[1], equals(1))
+  expect_that(as.numeric(m$coefficients[1]), equals(1))
   expect_that(m$loss, equals(mean((X[, 1] - Y)^2)))
   expect_that(sum(m$prediction), equals(sum(X[, 1])))
   expect_that(m$rmse, equals(sqrt(mean((X[, 1]- Y)^2))))
   
-  expect_error(oracle(Y = Y, experts = X, model = "expert", awake = awake), "Sleeping or missing values not allowed")
+  expect_warning(oracle(Y = Y, experts = X, model = "expert", awake = awake), "When experts are unactive")
   expect_warning(oracle(Y = Y, experts = X, model = "expert", lambda = 3), "Unused lambda parameter")
   expect_warning(oracle(Y = Y, experts = X, model = "expert", niter = 3), "Unused niter parameter")
 })
@@ -108,12 +109,14 @@ test_that("Best shifting oracle is ok", {
 }) 
 
 # test multi-dimensional data
+
 test_that("Dimension d>1 is ok",{
+  set.seed(1)
   # load some basic data to perform tests
   n <- 10
   d <- 3
   for (model in c("expert", "convex", "linear")) {
-    l <- sample(c("square", "pinball", "percentage", "absolute"), 1)
+    for (l in c("square", "pinball", "percentage", "absolute")) {
     
     # Une petite fonction pour creer les prévisions de la base canonique
     base_predictions = function(d,n) {
@@ -130,6 +133,7 @@ test_that("Dimension d>1 is ok",{
     }
     Y <- rep(theta.star, n)
     
+    cat(model, l, "\n")
     m <- oracle(Y = Y,experts = X, model = model, loss.type = l)
     m$d <- d
     m$prediction <- seriesToBlock(m$prediction,d)
@@ -143,6 +147,8 @@ test_that("Dimension d>1 is ok",{
     Y <- seriesToBlock(Y, d = d)
     m1 <- oracle(Y = Y, experts= X, model = model, loss.type = l)
     expect_equal(m$experts,m1$experts)
-    expect_true(mean(abs(m$prediction - m1$prediction)) < mean(abs(Y))/10)  
+    expect_true(mean(abs(m$prediction - m1$prediction)) < mean(abs(Y))/10)
+    }
   }
 })
+

@@ -7,7 +7,8 @@
 \method{plot}{mixture}(x, pause = FALSE, col = NULL, ...)
 }
 \arguments{
-\item{x}{an object of class mixture}
+\item{x}{an object of class mixture. If awake is provided (i.e., some experts are unactive), 
+their residuals and cumulative losses are computed by using the predictions of the mixture.}
 
 \item{pause}{if set to TRUE (default) displays the plots separately, otherwise on a single page}
 
@@ -24,12 +25,11 @@ expert's forecast in function of time, average loss suffered by the experts and 
 \description{
 provides different diagnostic plots for an aggregation procedure.
 }
+\seealso{
+See \code{\link{opera-package}} and opera-vignette for a brief example about how to use the package.
+}
 \author{
 Pierre Gaillard <pierre@gaillard.me>
 
 Yannig  Goude <yannig.goude@edf.fr>
 }
-\seealso{
-See \code{\link{opera-package}} and opera-vignette for a brief example about how to use the package.
-}
-

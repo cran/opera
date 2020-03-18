@@ -25,7 +25,7 @@
 #'    \item{'EWA'}{Exponentially weighted average aggregation rule. A positive learning rate \strong{eta} 
 #' can be chosen by the user. The
 #' bigger it is the faster the aggregation rule will learn from observations
-#' and experts performances. However, too hight values lead to unstable weight
+#' and experts performances. However, too high values lead to unstable weight
 #' vectors and thus unstable predictions. If it is not specified, the learning rate is calibrated online. 
 #' A finite grid of potential learning rates to be optimized online can be specified with \strong{grid.eta}.}
 #'    \item{'FS'}{Fixed-share aggregation rule. As for \code{ewa}, a learning rate \strong{eta} 
@@ -48,7 +48,7 @@
 #'    \item{'MLpol'}{Polynomial Potential aggregation rule
 #' with different learning rates for each expert.  The learning rates are
 #' calibrated using theoretical values. There are similar aggregation rules 
-#' like 'BOA' (Bernstein online Aggregation see [Wintenberger, 2014], 'MLewa', and 'MLprod' 
+#' like 'BOA' (Bernstein online Aggregation see [Wintenberger, 2014] <doi:10.1007/s10994-016-5592-6>, 'MLewa', and 'MLprod' 
 #' (see [Gaillard, Erven, and Stoltz, 2014])} 
 #'  \item{'OGD'}{Online Gradient descent (see Zinkevich, 2003). The optimization is performed with a time-varying learning rate. 
 #'  At time step \eqn{t \geq 1}, the learning rate is chosen to be \eqn{t^{-\alpha}}, where \eqn{\alpha} is provided by alpha in the parameters argument.
@@ -127,7 +127,7 @@
 #' \item{training}{A list that contains useful temporary information of the 
 #' aggregation rule to be updated and to perform predictions.}
 #' @author Pierre Gaillard <pierre@@gaillard.me>
-#' @keywords ~kwd1 ~kwd2
+#' @keywords ~models ~ts
 #' @seealso See \code{\link{opera-package}} and opera-vignette for a brief example about how to use the package.
 #'  
 #' @template example

@@ -5,8 +5,16 @@
 \alias{plot.oracle}
 \title{Compute oracle predictions}
 \usage{
-oracle(Y, experts, model = "convex", loss.type = "square", awake = NULL,
-  lambda = NULL, niter = NULL, ...)
+oracle(
+  Y,
+  experts,
+  model = "convex",
+  loss.type = "square",
+  awake = NULL,
+  lambda = NULL,
+  niter = NULL,
+  ...
+)
 
 \method{plot}{oracle}(x, sort = TRUE, col = NULL, ...)
 }
@@ -44,7 +52,9 @@ Possible if some experts are specialists and do not always form and suggest
 prediction. If the expert number \code{k} at instance \code{t} does not
 form any prediction of observation \code{Y_t}, we can put
 \code{awake[t,k]=0} so that the mixture does not consider expert \code{k} in
-the mixture to predict \code{Y_t}.}
+the mixture to predict \code{Y_t}. Remark that to compute the best expert oracle, 
+the performance of unactive (or partially active) experts is computed by using 
+the prediction of the uniform average of active experts.}
 
 \item{lambda}{A positive number used by the 'linear' oracle only. 
 A possible $L_2$ regularization parameter for computing the linear oracle 
@@ -88,14 +98,12 @@ data set \code{Y} and the expert advice to be well defined.
 Examples of oracles are the best fixed expert, the best fixed convex
 combination rule, the best linear combination rule, or the best expert
 that can shift a few times.
-
-Plot an aggregation procedure
 }
 \section{Methods (by class)}{
 \itemize{
 \item \code{oracle}: \code{plot}. It has one optional arguments.
 }}
+
 \author{
 Pierre Gaillard <pierre@gaillard.me>
 }
-
