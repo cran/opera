@@ -30,7 +30,6 @@ knitr::knit_hooks$set(imgcenter = function(before, options, envir){
 
 ## ---- echo=FALSE--------------------------------------------------------------
 library(opera)
-library(RColorBrewer)
 set.seed(1)
 
 ## -----------------------------------------------------------------------------
@@ -79,8 +78,7 @@ for (i in seq(idx_data_test)) {
 
 ## ----gbm,results="hide",message=FALSE,warning=FALSE---------------------------
 library(caret)
-gbm.fit <- train(Load ~ IPI + IPI_CVS + Temp + Temp1 + Time + Load1 + NumWeek, 
-                 data = data_train, method = "gbm")
+gbm.fit <- train(Load ~ IPI + IPI_CVS + Temp + Temp1 + Time + Load1 + NumWeek, data = data_train, method = "gbm")
 gbm.forecast <- predict(gbm.fit, newdata = data_test)
 
 ## ----loadAndForecasts, echo = TRUE, eval = FALSE------------------------------
@@ -96,18 +94,19 @@ matplot(cbind(Y, X), type = "l", col = 1:6, ylab = "Weekly load",
         xlab = "Week", main = "Expert forecasts and observations")
 
 ## ---- echo=FALSE--------------------------------------------------------------
+Y <- data_test$Load
+X <- cbind(gam.forecast, ar.forecast, gbm.forecast)
 colnames(X) <- c("gam", "ar", "gbm")
 
-## ----oracle, echo = TRUE, eval = FALSE----------------------------------------
+## ----oracle, echo = TRUE, eval = FALSE, warning=FALSE-------------------------
 #  oracle.convex <- oracle(Y = Y, experts = X, loss.type = "square", model = "convex")
+#  print(oracle.convex)
 #  plot(oracle.convex)
 
-## ----oracle, echo = FALSE, imgcenter = TRUE-----------------------------------
+## ----oracle, echo = FALSE, imgcenter = TRUE, warning=FALSE--------------------
 oracle.convex <- oracle(Y = Y, experts = X, loss.type = "square", model = "convex")
-plot(oracle.convex)
-
-## ----printoracle--------------------------------------------------------------
 print(oracle.convex)
+plot(oracle.convex)
 
 ## ----MLpolInit----------------------------------------------------------------
 MLpol0 <- mixture(model = "MLpol", loss.type = "square")
@@ -122,14 +121,56 @@ for (i in 1:length(Y)) {
 summary(MLpol)
 
 ## ----MLpol, echo = TRUE, eval = FALSE-----------------------------------------
-#  plot(MLpol, pause = TRUE, col = brewer.pal(3,name = "Set1"))
+#  plot(MLpol, pause = TRUE)
 
 ## ----MLpol, echo = FALSE, imgcenter = TRUE------------------------------------
-plot(MLpol, pause = TRUE, col = brewer.pal(3,name = "Set1"))
+plot(MLpol, pause = TRUE)
 
 ## ----MLpolPredict, eval = FALSE-----------------------------------------------
 #  MLpol <- predict(MLpol0, newexpert = X, newY = Y, online = TRUE)
 
 ## ----MLpolDirect, eval = FALSE------------------------------------------------
 #  MLpol <- mixture(Y = Y, experts = X, model = "MLpol", loss.type = "square")
+
+## ---- eval=FALSE--------------------------------------------------------------
+#  predictions <- MLpol$prediction
+
+## ---- eval=FALSE--------------------------------------------------------------
+#  newexperts <- X[1:3, ] # Experts forecasts to predict 3 new points
+#  pred <- predict(MLpol, newexperts = newexperts, online = FALSE, type = 'response')
+
+## ---- eval=TRUE, echo=FALSE---------------------------------------------------
+newexperts <- X[1:3, ] # Experts forecasts to predict 3 new points  
+pred <- predict(MLpol, newexperts = newexperts, online = FALSE, type = 'response')
+print(c(pred))
+
+## ---- eval=FALSE--------------------------------------------------------------
+#  pred = newexperts %*% MLpol$coefficients
+
+## ---- eval=TRUE, echo=FALSE---------------------------------------------------
+newexperts <- X[1:3, ] # Experts forecasts to predict 3 new points  
+pred = c(newexperts %*% MLpol$coefficients)
+print(pred)
+
+## ----block_transform, eval = TRUE---------------------------------------------
+YBlock <- seriesToBlock(X = Y, d = 4)
+XBlock <- seriesToBlock(X = X, d = 4)
+
+## ----block_mixture, eval = TRUE-----------------------------------------------
+MLpolBlock <- mixture(Y = YBlock, experts = XBlock, model = "MLpol", loss.type = "square")
+
+## ----block_tranformback, eval = TRUE------------------------------------------
+prediction <- blockToSeries(MLpolBlock$prediction)
+
+## ----blockbyblock, eval = TRUE------------------------------------------------
+MLpolBlock <- MLpol0
+d = 4
+n <- length(Y)/d
+for (i in 0:(n-1)) { 
+  idx <- 4*i + 1:4 # next four weeks to be predicted
+  MLpolBlock <- predict(MLpolBlock, newexperts = X[idx, ], newY = Y[idx], online = FALSE)
+}
+
+## ---- echo = FALSE, eval = TRUE-----------------------------------------------
+  print(head(MLpolBlock$weights))
 
