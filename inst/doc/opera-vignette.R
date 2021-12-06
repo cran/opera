@@ -1,16 +1,25 @@
 ## ----echo=FALSE---------------------------------------------------------------
-library("knitr")
-library("htmltools")
+suppressPackageStartupMessages({
+  suppressMessages({
+    suppressWarnings({
+      library("knitr")
+      library("htmltools")
+    })
+  })
+})
+
 
 knitr::opts_chunk$set(
   comment = "#>",
   collapse = TRUE,
   warning = FALSE,
   message = FALSE,
-  fig.width = 4.5,
-  fig.height = 3,
-  fig.path = "../inst/img/",
-  out.width = 300,
+  imgcenter = TRUE, 
+  fig.width = 6,
+  fig.height = 4,
+  out.width="50%", 
+  dpi = 96, 
+  fig.retina=1,
   cache.path = "../inst/cache/"
 )
 knitr::knit_hooks$set(imgcenter = function(before, options, envir){
@@ -20,6 +29,7 @@ knitr::knit_hooks$set(imgcenter = function(before, options, envir){
     HTML("</p>")
   }
 })
+readme <- FALSE
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  install.packages("opera")
@@ -28,7 +38,7 @@ knitr::knit_hooks$set(imgcenter = function(before, options, envir){
 #  install.packages("devtools")
 #  devtools::install_github("dralliag/opera")
 
-## ---- echo=FALSE--------------------------------------------------------------
+## ---- echo=TRUE---------------------------------------------------------------
 library(opera)
 set.seed(1)
 
@@ -39,22 +49,23 @@ idx_data_test <- 620:nrow(electric_load)
 data_train <- electric_load[-idx_data_test, ] 
 data_test <- electric_load[idx_data_test, ]  
 
+
 ## ----Load, echo = TRUE, eval = FALSE------------------------------------------
 #  plot(Load, type = "l", main = "The electric Load")
 
-## ----Load, echo = FALSE, imgcenter = TRUE-------------------------------------
+## ----Load, echo = FALSE, imgcenter = TRUE, out.width="50%", dpi = 96, fig.retina=1----
 plot(Load, type = "l", main = "The electric Load")
 
 ## ----Temp, echo = TRUE, eval = FALSE------------------------------------------
 #  plot(Temp, Load, pch = 16, cex = 0.5, main = "Temperature vs Load")
 
-## ----Temp, echo = FALSE, imgcenter = TRUE-------------------------------------
+## ----Temp, echo = FALSE, imgcenter = TRUE, out.width="50%", dpi = 96, fig.retina=1----
 plot(Temp, Load, pch = 16, cex = 0.5, main = "Temperature vs Load")
 
 ## ----NumWeek, echo = TRUE, eval = FALSE---------------------------------------
 #  plot(NumWeek, Load, pch = 16, cex = 0.5, main = "Annual seasonality")
 
-## ----NumWeek, echo = FALSE, imgcenter = TRUE----------------------------------
+## ----NumWeek, echo = FALSE, imgcenter = TRUE, out.width="50%", dpi = 96, fig.retina=1----
 plot(NumWeek, Load, pch = 16, cex = 0.5, main = "Annual seasonality")
 
 ## ----gam, results="hide",message=F, warning=F---------------------------------
@@ -87,7 +98,7 @@ gbm.forecast <- predict(gbm.fit, newdata = data_test)
 #  matplot(cbind(Y, X), type = "l", col = 1:6, ylab = "Weekly load",
 #          xlab = "Week", main = "Expert forecasts and observations")
 
-## ----loadAndForecasts, echo = FALSE, imgcenter = TRUE-------------------------
+## ----loadAndForecasts, echo = FALSE, imgcenter = TRUE, out.width="50%", dpi = 96, fig.retina=1----
 Y <- data_test$Load
 X <- cbind(gam.forecast, ar.forecast, gbm.forecast)
 matplot(cbind(Y, X), type = "l", col = 1:6, ylab = "Weekly load", 
@@ -98,15 +109,20 @@ Y <- data_test$Load
 X <- cbind(gam.forecast, ar.forecast, gbm.forecast)
 colnames(X) <- c("gam", "ar", "gbm")
 
-## ----oracle, echo = TRUE, eval = FALSE, warning=FALSE-------------------------
+## ---- echo = TRUE, eval = FALSE, warning=FALSE--------------------------------
 #  oracle.convex <- oracle(Y = Y, experts = X, loss.type = "square", model = "convex")
 #  print(oracle.convex)
 #  plot(oracle.convex)
 
-## ----oracle, echo = FALSE, imgcenter = TRUE, warning=FALSE--------------------
+## ----oracle, echo = FALSE, eval = FALSE, warning=FALSE------------------------
+#  oracle.convex <- oracle(Y = Y, experts = X, loss.type = "square", model = "convex")
+#  print(oracle.convex)
+#  plot(oracle.convex, dynamic = FALSE)
+
+## ----oracle, echo = FALSE, imgcenter = TRUE, out.width="50%", dpi = 96, fig.retina=1----
 oracle.convex <- oracle(Y = Y, experts = X, loss.type = "square", model = "convex")
 print(oracle.convex)
-plot(oracle.convex)
+plot(oracle.convex, dynamic = FALSE)
 
 ## ----MLpolInit----------------------------------------------------------------
 MLpol0 <- mixture(model = "MLpol", loss.type = "square")
@@ -120,11 +136,14 @@ for (i in 1:length(Y)) {
 ## ----MLpolsummary-------------------------------------------------------------
 summary(MLpol)
 
-## ----MLpol, echo = TRUE, eval = FALSE-----------------------------------------
-#  plot(MLpol, pause = TRUE)
+## ---- echo = TRUE, eval = FALSE-----------------------------------------------
+#  plot(MLpol)
 
-## ----MLpol, echo = FALSE, imgcenter = TRUE------------------------------------
-plot(MLpol, pause = TRUE)
+## ----MLpol, echo = FALSE, eval = FALSE----------------------------------------
+#  plot(MLpol, dynamic = FALSE, pause = TRUE)
+
+## ----MLpol, echo = FALSE,  fig.show="hold", out.width="50%"-------------------
+plot(MLpol, dynamic = FALSE, pause = TRUE)
 
 ## ----MLpolPredict, eval = FALSE-----------------------------------------------
 #  MLpol <- predict(MLpol0, newexpert = X, newY = Y, online = TRUE)
